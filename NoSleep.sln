@@ -1,9 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoSleep", "NoSleep\NoSleep.csproj", "{2285056D-8AA1-40D9-A5F5-F3E53F60EC0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoSleep", "NoSleep\NoSleep.csproj", "{2285056D-8AA1-40D9-A5F5-F3E53F60EC0F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F8C0ABFE-D352-47A0-90BA-4DA36A354F26}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\dotnet.yml = .github\workflows\dotnet.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
