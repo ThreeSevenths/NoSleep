@@ -23,36 +23,91 @@
  * 
 */
 using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
+using Tmds.DBus.Protocol;
 
 namespace NoSleep
 {
-    class Program
+    static class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            Console.WriteLine("NoSleep. Your PC will not go to sleep or turn off the display.");
+            Console.WriteLine();
+            
+            if (OperatingSystem.IsWindows())
+            {
+                
+
+                
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.Write("Press any key to restore normal sleep...");
+                Console.ResetColor();
+                Console.WriteLine();
+
+                var result = NativeMethods.SetThreadExecutionState(NativeMethods.EXECUTION_STATE.ES_DISPLAY_REQUIRED | NativeMethods.EXECUTION_STATE.ES_CONTINUOUS);
+
+                Console.Read();
+
+                Console.WriteLine("Restoring sleep operation");
+
+                result = NativeMethods.SetThreadExecutionState(NativeMethods.EXECUTION_STATE.ES_CONTINUOUS);
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                using var dbus = new DBusConnection(DBusAddress.System);
+
+                await dbus.ConnectAsync();
+
+                var services = await dbus.ListServicesAsync();
+
+                var loginservicename = services.FirstOrDefault(svc => svc.StartsWith("org.freedesktop.login1", StringComparison.OrdinalIgnoreCase));
+
+                if (string.IsNullOrWhiteSpace((loginservicename)))
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write("DBus does not have a service org.freedesktop.login1.");
+                    Console.ResetColor();
+                    Console.WriteLine();
+                }
+                else
+                {
+                    var login1service = new login1.DBus.Manager(dbus, loginservicename, "/org/freedesktop/login1");
+
+                    var maxinhibitors = await login1service.GetInhibitorsMaxAsync();
+
+                    if (maxinhibitors < 1)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("GetInhibitorsMax reports less than 1 supported inhibitor.");
+                        Console.ResetColor();
+                        Console.WriteLine();
+                    }
+                    
+                    Console.ForegroundColor = ConsoleColor.Cyan;
+                    Console.Write("Press any key to restore normal sleep...");
+                    Console.ResetColor();
+                    Console.WriteLine();
+
+                    using (var inhibithandle = await login1service.InhibitAsync("sleep", "NoSleep",
+                               "User is running NoSleep. Sleep is blocked until closed.", "block"))
+                    {
+                        Console.Read();
+                        Console.WriteLine("Restoring sleep operation");
+                    }
+                    
+                    
+                }
+            }
+            else
             {
                 Console.ForegroundColor = ConsoleColor.Red;
                 Console.Write("Error: Platform not supported. This app only works with Windows");
                 Console.ResetColor();
                 Console.WriteLine();
             }
-
-            Console.WriteLine("NoSleep. Your PC will not go to sleep or turn off the display.");
-
-            Console.WriteLine();
-            Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.Write("Press any key to restore normal sleep...");
-            Console.ResetColor();
-            Console.WriteLine();
-
-            var result = NativeMethods.SetThreadExecutionState(NativeMethods.EXECUTION_STATE.ES_DISPLAY_REQUIRED | NativeMethods.EXECUTION_STATE.ES_CONTINUOUS);
-
-            Console.Read();
-            
-            Console.WriteLine("Restoring sleep operation");
-
-            result = NativeMethods.SetThreadExecutionState(NativeMethods.EXECUTION_STATE.ES_CONTINUOUS);
         }
     }
 }
